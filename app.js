@@ -217,7 +217,7 @@ app.get("/admin-dashboard", (req, res) => {
   if (!req.session.user || req.session.user.role !== "admin") {
     return res.redirect("/");
   }
-  res.render("admin-dashboard", { title: "Admin Dashboard" });
+  res.render("admin-dashboard", { title: "Admin Dashboard", user: req.session.user });
 });
 
 app.listen(port, () => {
