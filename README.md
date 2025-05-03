@@ -8,6 +8,9 @@ DB_USER=
 DB_PASSWORD=
 DB_NAME=
 SESSION_SECRET=
+MAIL_HOST=
+MAIL_USER=
+MAIL_PASSWORD=
 ```
 
 Create a `mysql or mariadb` database
