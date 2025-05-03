@@ -148,9 +148,11 @@ app.post("/forgot-password", (req, res) => {
                   subject: "Password Reset",
                   text: `Activate html`,
                   html: `
+                  <body style="background-color:black; color:white">
                   <p>Here's the link to reset your password:</p>
                   <p><a href="http://localhost:3000/reset-password?token=${reset_token}">Reset Password</a></p>
-                  <p>This Link is valid until: ${reset_expires}</p>`,
+                  <p>This Link is valid until: ${reset_expires}</p>
+                  </body>`,
                 });
 
                 console.log("Message sent: %s", info.messageId);
@@ -217,7 +219,29 @@ app.get("/admin-dashboard", (req, res) => {
   if (!req.session.user || req.session.user.role !== "admin") {
     return res.redirect("/");
   }
-  res.render("admin-dashboard", { title: "Admin Dashboard", user: req.session.user });
+  conn.query("SELECT * FROM users", (err, results) => {
+    res.render("admin-dashboard", {
+      title: "Admin Dashboard",
+      user: req.session.user,
+      users: results,
+      result: "",
+    });
+  });
+});
+
+app.post("/delete-user", (req, res) => {
+  const userId = req.body.id;
+  conn.query("DELETE FROM users WHERE id = ?", [userId], (err, result) => {
+    conn.query("SELECT * FROM users", (err, users) => {
+      const result = "User deleted successfully";
+      res.render("admin-dashboard", {
+        title: "Admin Dashboard",
+        user: req.session.user,
+        users: users,
+        result: result,
+      });
+    });
+  });
 });
 
 app.listen(port, () => {

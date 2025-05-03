@@ -1,15 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%=title%></title>
-</head>
-<body>
-    <h1><%=title%></h1>
-    <h2>Hello <%=user.role%> <%=user.email%></h2>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <style>
+      td {
+        border: 1px solid black;
+      }
+
+      th {
+        border: 2px solid black;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1><%= title %></h1>
+    <h2>Hello <%= user.role %> <%= user.email %></h2>
     <form action="/logout" method="POST">
-        <button type="submit">Log Out</button>
+      <button type="submit">Log Out</button>
     </form>
-</body>
+    <h1>User List</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Password</th>
+          <th>Reset Token</th>
+          <th>Reset Expires</th>
+          <th>Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user=> { %>
+        <tr>
+          <td><%= user.id %></td>
+          <td><%= user.email %></td>
+          <td><%= user.password %></td>
+          <td><%= user.reset_token %></td>
+          <td><%= user.reset_expires %></td>
+          <td><%= user.role %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <form action="/delete-user" method="POST">
+      <input type="text" name="id" required />
+      <button type="submit">Delete User</button>
+    </form>
+    <% if(result){ %> <%=result%> <%}%>
+  </body>
 </html>
