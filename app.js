@@ -5,6 +5,7 @@ require("dotenv").config();
 const mysql = require("mysql2");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { title } = require("process");
 const app = express();
 const port = 3000;
 
@@ -60,17 +61,18 @@ app.get("/dashboard", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const role = "user";
   conn.query(
-    "INSERT INTO users (email, password) VALUES (?,?)",
-    [email, password],
+    "INSERT INTO users (email, password, role) VALUES (?,?,?)",
+    [email, password, role],
     (err, results) => {
       if (err) {
         console.error(err);
-        res.send("There was a problem with your registration");
+        return res.send("There was a problem with your registration");
       } else {
         console.log("Sucessfully registered");
-        req.session.user = { id: results.insertId, email };
-        res.redirect("/dashboard");
+        req.session.user = { id: results.insertId, email, role };
+        return res.redirect("/dashboard");
       }
     }
   );
@@ -82,23 +84,23 @@ app.post("/login", (req, res) => {
   conn.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
     if (err) {
       console.error(err);
-      res.send("No email found in the database");
+      return res.send("No email found in the database");
     }
     if (results.length == 0) {
-      res.send("email not found");
+      return res.send("email not found");
     } else if (results[0].password == password) {
       console.log("Sucessfully logged in");
-      req.session.user = { id: results[0].id, email };
-      res.redirect("/dashboard");
+      req.session.user = { id: results[0].id, email, role: results[0].role };
+      return res.redirect("/dashboard");
     } else {
-      res.send("Wrong password");
+      return res.send("Wrong password");
     }
   });
 });
 
 app.post("/logout", (req, res) => {
   req.session.destroy(() => {
-    res.redirect("/");
+    return res.redirect("/");
   });
 });
 
@@ -114,10 +116,10 @@ app.post("/forgot-password", (req, res) => {
     (err, results) => {
       if (err) {
         console.error(err);
-        res.send("No email found in the database");
+        return res.send("No email found in the database");
       }
       if (results.length == 0) {
-        res.send("email not found");
+        return res.send("email not found");
       } else {
         const reset_token = crypto.randomBytes(32).toString("hex");
         const reset_expires = new Date(Date.now() + 3600000);
@@ -127,7 +129,7 @@ app.post("/forgot-password", (req, res) => {
           (err2) => {
             if (err) {
               console.error(err2);
-              res.send("No email found in the database");
+              return res.send("No email found in the database");
             } else {
               const transporter = nodemailer.createTransport({
                 host: `${mailhost}`,
@@ -141,18 +143,21 @@ app.post("/forgot-password", (req, res) => {
 
               async function email() {
                 const info = await transporter.sendMail({
-                  from: `Jauni.de - Mail System" ${mailuser}`,
+                  from: `"Jauni.de - Mail System" <${mailuser}>`,
                   to: `${emailvalue}`,
-                  subject: "Hello ✔",
-                  text: "Hello world?",
-                  html: `<a href=http://localhost:3000/reset-password?token=${reset_token}>Reset Password</a>`,
+                  subject: "Password Reset",
+                  text: `Activate html`,
+                  html: `
+                  <p>Here's the link to reset your password:</p>
+                  <p><a href="http://localhost:3000/reset-password?token=${reset_token}">Reset Password</a></p>
+                  <p>This Link is valid until: ${reset_expires}</p>`,
                 });
 
                 console.log("Message sent: %s", info.messageId);
               }
 
               email().catch(console.error);
-              res.send("Check your email");
+              return res.send("Check your email");
             }
           }
         );
@@ -181,14 +186,14 @@ app.post("/reset-password", (req, res) => {
     (err, results) => {
       if (err) {
         console.error(err);
-        res.send("No token found in the database");
+        return res.send("No token found in the database");
       }
       if (results.length == 0) {
-        res.send("token not found");
+        return res.send("token not found");
       } else {
-        const expirationDate = new Date(results[0].token_expires);
+        const expirationDate = new Date(results[0].reset_expires);
         if (expirationDate.getTime() < Date.now()) {
-          res.send("Token expired");
+          return res.send("Token expired");
         } else {
           conn.query(
             "UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE reset_token = ?",
@@ -198,7 +203,7 @@ app.post("/reset-password", (req, res) => {
                 console.error(err2);
                 return res.send("Error updating password");
               } else {
-                res.send("Passwort successfully changed");
+                return res.send("Passwort successfully changed");
               }
             }
           );
@@ -206,6 +211,13 @@ app.post("/reset-password", (req, res) => {
       }
     }
   );
+});
+
+app.get("/admin-dashboard", (req, res) => {
+  if (!req.session.user || req.session.user.role !== "admin") {
+    return res.redirect("/");
+  }
+  res.render("admin-dashboard", { title: "Admin Dashboard" });
 });
 
 app.listen(port, () => {
