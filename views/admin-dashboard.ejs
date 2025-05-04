@@ -1,3 +1,4 @@
+<%- include('../partials/header.ejs') %>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,23 +7,22 @@
     <title><%= title %></title>
     <style>
       td {
-        border: 1px solid black;
+        border: 1px solid white;
       }
 
       th {
-        border: 2px solid black;
+        border: 2px solid white;
       }
     </style>
   </head>
 
-  <body>
-    <h1><%= title %></h1>
-    <h2>Hello <%= user.role %> <%= user.email %></h2>
-    <form action="/logout" method="POST">
-      <button type="submit">Log Out</button>
-    </form>
-    <h1>User List</h1>
-    <table>
+  <body class="bg-gray-900 text-white">
+    <h1 class="text-2xl font-bold text-center mt-4"><%= title %></h1>
+    <h2 class="text-2xl font-bold text-center mt-4">
+      Hello <%= user.role %> <%= user.email %>
+    </h2>
+    <h1 class="text-2xl font-bold text-center mt-4">User List</h1>
+    <table class="mx-auto mt-4">
       <thead>
         <tr>
           <th>ID</th>
@@ -46,10 +46,11 @@
         <% }) %>
       </tbody>
     </table>
-    <form action="/delete-user" method="POST">
-      <input type="text" name="id" required />
-      <button type="submit">Delete User</button>
+    <form action="/delete-user" method="POST" class="flex flex-col items-center space-y-4 mt-4">
+      <input type="text" name="id" class="p-2 bg-gray-700 text-white border border-gray-600 rounded" required />
+      <button type="submit" class="bg-blue-500 py-2 px-4 text-white rounded hover:bg-blue-600">Delete User</button>
     </form>
     <% if(result){ %> <%=result%> <%}%>
   </body>
 </html>
+<%- include('../partials/footer.ejs') %>
