@@ -5,7 +5,6 @@ require("dotenv").config();
 const mysql = require("mysql2");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
-const { title } = require("process");
 const app = express();
 const port = 3000;
 
@@ -38,9 +37,11 @@ app.use(
   })
 );
 app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.render("index", { title: "Home" });
+  const user = req.session.user || null;
+  res.render("index", { title: "Home", user: user });
 });
 
 app.get("/register", (req, res) => {
@@ -89,10 +90,11 @@ app.post("/login", (req, res) => {
     if (results.length == 0) {
       return res.send("email not found");
     } else if (results[0].password == password) {
-      console.log("Sucessfully logged in");
+      console.log(`✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`);
       req.session.user = { id: results[0].id, email, role: results[0].role };
       return res.redirect("/dashboard");
     } else {
+      console.log(`❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`)
       return res.send("Wrong password");
     }
   });
@@ -105,7 +107,8 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/forgot-password", (req, res) => {
-  res.render("forgot-password", { title: "Forgot Password" });
+  const user = req.session.user || null;
+  res.render("forgot-password", { title: "Forgot Password", user: user });
 });
 
 app.post("/forgot-password", (req, res) => {
@@ -148,11 +151,10 @@ app.post("/forgot-password", (req, res) => {
                   subject: "Password Reset",
                   text: `Activate html`,
                   html: `
-                  <body style="background-color:black; color:white">
                   <p>Here's the link to reset your password:</p>
                   <p><a href="http://localhost:3000/reset-password?token=${reset_token}">Reset Password</a></p>
                   <p>This Link is valid until: ${reset_expires}</p>
-                  </body>`,
+                  `,
                 });
 
                 console.log("Message sent: %s", info.messageId);
@@ -169,6 +171,7 @@ app.post("/forgot-password", (req, res) => {
 });
 
 app.get("/reset-password", (req, res) => {
+  const user = req.session.user || null;
   const reset_token = req.query.token;
   if (!reset_token) {
     return res.send("token is missing");
@@ -176,6 +179,7 @@ app.get("/reset-password", (req, res) => {
     res.render("reset-password", {
       title: "Reset Password",
       token: reset_token,
+      user: user,
     });
   }
 });
