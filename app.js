@@ -5,6 +5,7 @@ require("dotenv").config();
 const mysql = require("mysql2");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const flash = require("express-flash");
 const app = express();
 const port = 3000;
 
@@ -42,10 +43,18 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
+app.use(flash());
 
 app.get("/", (req, res) => {
   const user = req.session.user || null;
-  res.render("index", { title: "Home", user: user });
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
+  res.render("index", {
+    title: "Home",
+    user: user,
+    successMessages: successMessages,
+    errorMessages: errorMessages,
+  });
 });
 
 app.get("/register", (req, res) => {
@@ -53,7 +62,13 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  res.render("login", { title: "Login" });
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
+  res.render("login", {
+    title: "Login",
+    successMessages: successMessages,
+    errorMessages: errorMessages,
+  });
 });
 
 app.get("/dashboard", (req, res) => {
@@ -75,7 +90,7 @@ app.post("/register", (req, res) => {
         console.error(err);
         return res.send("There was a problem with your registration");
       } else {
-        console.log("Sucessfully registered");
+        console.log(`✅ Registration by ${role} ${email} with ${password}`);
         req.session.user = { id: results.insertId, email, role };
         return res.redirect("/dashboard");
       }
@@ -92,7 +107,8 @@ app.post("/login", (req, res) => {
       return res.send("No email found in the database");
     }
     if (results.length == 0) {
-      return res.send("email not found");
+      req.flash("error", "Email not found");
+      return res.redirect("/login");
     } else if (results[0].password == password) {
       console.log(
         `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
@@ -103,7 +119,8 @@ app.post("/login", (req, res) => {
       console.log(
         `❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`
       );
-      return res.send("Wrong password");
+      req.flash("error", "Wrong password");
+      return res.redirect("/login");
     }
   });
 });
@@ -116,7 +133,14 @@ app.post("/logout", (req, res) => {
 
 app.get("/forgot-password", (req, res) => {
   const user = req.session.user || null;
-  res.render("forgot-password", { title: "Forgot Password", user: user });
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
+  res.render("forgot-password", {
+    title: "Forgot Password",
+    user: user,
+    successMessages: successMessages,
+    errorMessages: errorMessages,
+  });
 });
 
 app.post("/forgot-password", (req, res) => {
@@ -130,7 +154,8 @@ app.post("/forgot-password", (req, res) => {
         return res.send("No email found in the database");
       }
       if (results.length == 0) {
-        return res.send("email not found");
+        req.flash("error", "email not found");
+        return res.redirect("/forgot-password");
       } else {
         const reset_token = crypto.randomBytes(32).toString("hex");
         const reset_expires = new Date(Date.now() + 3600000);
@@ -157,7 +182,7 @@ app.post("/forgot-password", (req, res) => {
                   from: `"Jauni.de - Mail System" <${mailuser}>`,
                   to: `${emailvalue}`,
                   subject: "Password Reset",
-                  text: `Activate html`,
+                  text: `Activate html to see relevant content`,
                   html: `
                   <p>Here's the link to reset your password:</p>
                   <p><a href="http://localhost:3000/reset-password?token=${reset_token}">Reset Password</a></p>
@@ -169,7 +194,8 @@ app.post("/forgot-password", (req, res) => {
               }
 
               email().catch(console.error);
-              return res.send("Check your email");
+              req.flash("success", "Check your inbox");
+              return res.redirect("/forgot-password");
             }
           }
         );
@@ -180,14 +206,19 @@ app.post("/forgot-password", (req, res) => {
 
 app.get("/reset-password", (req, res) => {
   const user = req.session.user || null;
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
   const reset_token = req.query.token;
   if (!reset_token) {
-    return res.send("token is missing");
+    req.flash("error", "token is missing");
+    return res.redirect("/reset-password");
   } else {
     res.render("reset-password", {
       title: "Reset Password",
       token: reset_token,
       user: user,
+      successMessages: successMessages,
+      errorMessages: errorMessages,
     });
   }
 });
@@ -203,7 +234,8 @@ app.post("/reset-password", (req, res) => {
         return res.send("No token found in the database");
       }
       if (results.length == 0) {
-        return res.send("token not found");
+        req.flash("error", "token not found");
+        return res.redirect("/reset-password");
       } else {
         const expirationDate = new Date(results[0].reset_expires);
         if (expirationDate.getTime() < Date.now()) {
@@ -217,7 +249,8 @@ app.post("/reset-password", (req, res) => {
                 console.error(err2);
                 return res.send("Error updating password");
               } else {
-                return res.send("Passwort successfully changed");
+                req.flash("success", "Password successfully changed");
+                return res.redirect("/");
               }
             }
           );
@@ -272,17 +305,25 @@ app.post("/change-password", (req, res) => {
     "UPDATE users SET password = ? WHERE id = ?",
     [newpassword, userId],
     (err, results) => {
-      console.log(`Password was changed to ${newpassword}`);
-      return res.redirect("/dashboard")
+      console.log(`Password from ${userId} was changed to ${newpassword}`);
+      req.flash("success", "Password changed");
+      return res.redirect("/account");
     }
   );
 });
 
 app.get("/account", (req, res) => {
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
   if (!req.session.user) {
     return res.redirect("/");
   }
-  res.render("account", { title: "Account", user: req.session.user });
+  res.render("account", {
+    title: "Account",
+    user: req.session.user,
+    successMessages: successMessages,
+    errorMessages: errorMessages,
+  });
 });
 
 app.listen(port, () => {
