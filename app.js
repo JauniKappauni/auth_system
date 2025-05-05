@@ -265,6 +265,19 @@ app.post("/delete-account", (req, res) => {
   });
 });
 
+app.post("/change-password", (req, res) => {
+  const userId = req.session.user.id;
+  const newpassword = req.body.newpassword;
+  conn.query(
+    "UPDATE users SET password = ? WHERE id = ?",
+    [newpassword, userId],
+    (err, results) => {
+      console.log(`Password was changed to ${newpassword}`);
+      return res.redirect("/dashboard")
+    }
+  );
+});
+
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
