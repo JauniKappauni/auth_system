@@ -29,6 +29,18 @@ CREATE TABLE users (
 	role VARCHAR(50) DEFAULT 'user'
 );
 ```
+If you use Pterodactyl, you have to make sure to create the root user for external networking with all privileges
+```
+CREATE USER 'root'@'%' IDENTIFIED BY '';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+```
+You can give yourself the administrator role
+```
+UPDATE users 
+SET role = 'admin' 
+WHERE email = 'specific_user@example.com';
+```
 
 # ToDo's
 

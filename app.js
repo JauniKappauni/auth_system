@@ -10,6 +10,7 @@ const app = express();
 const port = 3000;
 
 const dbhost = process.env.DB_HOST;
+const dbport = process.env.DB_PORT;
 const dbuser = process.env.DB_USER;
 const dbpassword = process.env.DB_PASSWORD;
 const dbname = process.env.DB_NAME;
@@ -20,6 +21,7 @@ const mailpassword = process.env.MAIL_PASSWORD;
 
 const conn = mysql.createConnection({
   host: dbhost,
+  port: dbport,
   user: dbuser,
   password: dbpassword,
   database: dbname,
