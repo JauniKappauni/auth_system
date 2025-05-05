@@ -278,6 +278,13 @@ app.post("/change-password", (req, res) => {
   );
 });
 
+app.get("/account", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  res.render("account", { title: "Account", user: req.session.user });
+});
+
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
