@@ -23,8 +23,12 @@ const conn = mysql.createConnection({
   password: dbpassword,
   database: dbname,
 });
-conn.connect(() => {
-  console.log("Connection to the database successful");
+conn.connect((err, res) => {
+  if (err) {
+    console.error("❌DB CONN", err);
+  } else {
+    console.log("✅DB CONN", res);
+  }
 });
 
 app.set("view engine", "ejs");
@@ -90,11 +94,15 @@ app.post("/login", (req, res) => {
     if (results.length == 0) {
       return res.send("email not found");
     } else if (results[0].password == password) {
-      console.log(`✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`);
+      console.log(
+        `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
+      );
       req.session.user = { id: results[0].id, email, role: results[0].role };
       return res.redirect("/dashboard");
     } else {
-      console.log(`❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`)
+      console.log(
+        `❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`
+      );
       return res.send("Wrong password");
     }
   });
@@ -244,6 +252,15 @@ app.post("/delete-user", (req, res) => {
         users: users,
         result: result,
       });
+    });
+  });
+});
+
+app.post("/delete-account", (req, res) => {
+  const userId = req.session.user.id;
+  conn.query("DELETE FROM users WHERE id = ?", [userId], (err, result) => {
+    req.session.destroy(() => {
+      return res.redirect("/");
     });
   });
 });

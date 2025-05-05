@@ -11,6 +11,9 @@
     <% if (user.role === 'admin') { %>
     <a href="/admin-dashboard" class=" bg-blue-500 py-2 text-white hover:bg-blue-600">Admin-Dashboard</a>
     <% } %>
+    <form action="/delete-account" method="POST" class="flex flex-col items-center space-y-4 mt-4">
+      <button type="submit" class="bg-blue-500 py-2 px-4 text-white rounded hover:bg-blue-600">Delete User</button>
+    </form>
   </body>
 </html>
 <%- include('../partials/footer.ejs') %>
