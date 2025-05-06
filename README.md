@@ -26,8 +26,8 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
 	reset_token VARCHAR(255),
 	reset_expires DATETIME,
-	role VARCHAR(50) DEFAULT 'user'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	role VARCHAR(50) DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME
 );
 ```
