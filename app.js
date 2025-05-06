@@ -112,6 +112,7 @@ app.post("/login", (req, res) => {
       req.flash("error", "Email not found");
       return res.redirect("/login");
     } else if (results[0].password == password) {
+      conn.query("UPDATE users SET last_login = NOW() WHERE email = ?", [email])
       console.log(
         `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
       );
