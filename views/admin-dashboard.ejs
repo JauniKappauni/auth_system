@@ -31,6 +31,7 @@
           <th>Reset Token</th>
           <th>Reset Expires</th>
           <th>Role</th>
+          <th>Created at</th>
         </tr>
       </thead>
       <tbody>
@@ -42,6 +43,7 @@
           <td><%= user.reset_token %></td>
           <td><%= user.reset_expires %></td>
           <td><%= user.role %></td>
+          <td><%= user.created_at %></td>
         </tr>
         <% }) %>
       </tbody>

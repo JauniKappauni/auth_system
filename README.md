@@ -27,6 +27,7 @@ CREATE TABLE users (
 	reset_token VARCHAR(255),
 	reset_expires DATETIME,
 	role VARCHAR(50) DEFAULT 'user'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 If you use Pterodactyl, you have to make sure to create the root user for external networking with all privileges
