@@ -31,6 +31,25 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME
 );
+
+CREATE TABLE tickets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    category VARCHAR(255),
+    status BOOLEAN,
+    created_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE ticket_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_id INT,
+    user_id INT,
+    message TEXT,
+    created_at DATETIME,
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 ```
 If you use Pterodactyl, you have to make sure to create the root user for external networking with all privileges
 ```
