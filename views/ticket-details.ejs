@@ -1,0 +1,47 @@
+<%- include('../partials/header.ejs') %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%=title%></title>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-md max-w-2xl mx-auto mt-10">
+        <h1 class="text-xl font-medium">Ticket Information</h1>
+      <p>Ticket ID: <%= ticket.id %></p>
+      <p>Status: <%=ticket.status ? "Open" : "Closed" %></p>
+      <p>Created at: <%= ticket.created_at.toLocaleString() %></p>
+    </div>
+    <div class="max-w-2xl mx-auto mt-2 space-y-2">
+      <h3 class="text-xl font-medium">Add a message</h3>
+      <form method="post" action="/tickets/<%= ticket.id %>/messages">
+        <textarea
+          name="message"
+          class="w-full p-3 rounded bg-gray-700 text-white placeholder-gray-400 resize-none"
+          required
+        ></textarea>
+        <button
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 mt-2 px-4 py-2 rounded"
+        >
+          Antworten
+        </button>
+      </form>
+      <h2 class="text-2xl font-semibold text-center">Messages</h2>
+      <% messages.forEach(message => { %>
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md">
+        <p class="font-bold text-blue-400">
+          <strong>Username: <%= message.user_id %></strong>
+        </p>
+        <p><%= message.message %></p>
+        <p class="text-sm text-gray-400">
+          <small><%= message.created_at.toLocaleString()%></small>
+        </p>
+      </div>
+      <% }) %>
+    </div>
+    <%- include('../partials/footer.ejs') %>
+  </body>
+</html>
+
