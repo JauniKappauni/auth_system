@@ -6,6 +6,7 @@ const mysql = require("mysql2");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const flash = require("express-flash");
+const { userInfo } = require("os");
 const app = express();
 const port = 3000;
 
@@ -112,7 +113,9 @@ app.post("/login", (req, res) => {
       req.flash("error", "Email not found");
       return res.redirect("/login");
     } else if (results[0].password == password) {
-      conn.query("UPDATE users SET last_login = NOW() WHERE email = ?", [email])
+      conn.query("UPDATE users SET last_login = NOW() WHERE email = ?", [
+        email,
+      ]);
       console.log(
         `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
       );
@@ -327,6 +330,101 @@ app.get("/account", (req, res) => {
     successMessages: successMessages,
     errorMessages: errorMessages,
   });
+});
+
+app.get("/tickets", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  const userId = req.session.user.id;
+  conn.query(
+    "SELECT * FROM tickets WHERE user_id = ?",
+    [userId],
+    (err, result) => {
+      res.render("tickets", {
+        title: "Tickets",
+        user: req.session.user,
+        tickets: result,
+      });
+    }
+  );
+});
+
+app.get("/tickets/new", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  res.render("create-ticket", {
+    title: "Create Ticket",
+    user: req.session.user,
+  });
+});
+
+app.get("/tickets/:id", (req, res) => {
+  ticketId = req.params.id;
+  conn.query(
+    "SELECT * FROM tickets WHERE id = ?",
+    [ticketId],
+    (err, results1) => {
+      conn.query(
+        "SELECT * FROM ticket_messages WHERE ticket_id = ? ORDER BY created_at",
+        [ticketId],
+        (err, results2) => {
+          res.render("ticket-details", {
+            ticket: results1[0],
+            messages: results2,
+            user: req.session.user,
+            title: "Ticket Details",
+          });
+        }
+      );
+    }
+  );
+});
+
+app.post("/tickets", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  const userId = req.session.user.id;
+  const category = req.body.category;
+  const message = req.body.firstMessage;
+  const status = true;
+  const created_at = new Date();
+  if (category) {
+    conn.query(
+      "INSERT INTO tickets (user_id, category, status, created_at) VALUES (?,?,?,?)",
+      [userId, category, status, created_at],
+      (err, result) => {
+        const ticketId = result.insertId;
+        conn.query(
+          "INSERT INTO ticket_messages (ticket_id, user_id, message, created_at) VALUES (?,?,?,?)",
+          [ticketId, userId, message, created_at],
+          (err, result) => {
+            res.redirect(`/tickets/${ticketId}`);
+          }
+        );
+      }
+    );
+  }
+});
+
+app.post("/tickets/:id/messages", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  const ticketId = req.params.id;
+  const userId = req.session.user.id;
+  const message = req.body.message;
+  const created_at = new Date();
+
+  conn.query(
+    "INSERT INTO ticket_messages (ticket_id, user_id, message, created_at) VALUES (?,?,?,?)",
+    [ticketId, userId, message, created_at],
+    (err, result) => {
+      res.redirect(`/tickets/${ticketId}`);
+    }
+  );
 });
 
 app.listen(port, () => {
