@@ -1,0 +1,23 @@
+<%- include('../partials/header.ejs') %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%=title%></title>
+  </head>
+  <body class="bg-gray-900 text-white">
+    <div class="max-w-2xl mx-auto mt-2 space-y-2">
+        <h1 class="text-2xl font-bold text-center mb-6"><%=title%></h1>
+        <form method="post" action="/tickets" class="space-y-4">
+            <label for="category" class="block text-sm font-medium">Category</label>
+            <input type="text" name="category" class="w-full p-2 mt-1 bg-gray-700 text-white border border-gray-600 rounded" required />
+            <label for="firstMessage" class="block text-sm font-medium">First Message</label>
+            <input type="text" name="firstMessage" class="w-full p-2 mt-1 bg-gray-700 text-white border border-gray-600 rounded" required />
+            <input type="submit" value="Create Ticket" class="w-full bg-blue-500 py-2 text-white rounded hover:bg-blue-600" />
+        </form>
+    </div>
+    
+  </body>
+</html>
+<%- include('../partials/footer.ejs') %>
