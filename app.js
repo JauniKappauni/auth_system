@@ -282,11 +282,14 @@ app.get("/admin-dashboard", (req, res) => {
     return res.redirect("/");
   }
   conn.query("SELECT * FROM users", (err, results) => {
-    res.render("admin-dashboard", {
-      title: "Admin Dashboard",
-      user: req.session.user,
-      users: results,
-      result: "",
+    conn.query("SELECT * FROM tickets", (err, results2) => {
+      res.render("admin-dashboard", {
+        title: "Admin Dashboard",
+        user: req.session.user,
+        users: results,
+        tickets: results2,
+        result: "",
+      });
     });
   });
 });
@@ -372,11 +375,22 @@ app.get("/tickets/new", (req, res) => {
 });
 
 app.get("/tickets/:id", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+
   ticketId = req.params.id;
   conn.query(
     "SELECT * FROM tickets WHERE id = ?",
     [ticketId],
     (err, results1) => {
+      const ticket = results1[0];
+      if (
+        req.session.user.role !== "admin" &&
+        ticket.user_id !== req.session.user.id
+      ) {
+        return res.redirect("/");
+      }
       conn.query(
         "SELECT * FROM ticket_messages WHERE ticket_id = ? ORDER BY created_at",
         [ticketId],
