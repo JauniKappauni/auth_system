@@ -332,17 +332,34 @@ app.post("/change-password", (req, res) => {
   );
 });
 
+app.post("/change-username", (req, res) => {
+  const userId = req.session.user.id;
+  const newUsername = req.body.newUsername;
+  conn.query(
+    "UPDATE users SET username = ? WHERE id = ?",
+    [newUsername, userId],
+    (err, results) => {
+      console.log(`Username from ${userId} was changed to ${newUsername}`);
+      req.flash("success", "Username changed");
+      return res.redirect("/account");
+    }
+  );
+});
+
 app.get("/account", (req, res) => {
   const successMessages = req.flash("success");
   const errorMessages = req.flash("error");
   if (!req.session.user) {
     return res.redirect("/");
   }
-  res.render("account", {
-    title: "Account",
-    user: req.session.user,
-    successMessages: successMessages,
-    errorMessages: errorMessages,
+  const userId = req.session.user.id;
+  conn.query("SELECT * FROM users WHERE id = ?", [userId], (err, results) => {
+    res.render("account", {
+      title: "Account",
+      user: results[0],
+      successMessages: successMessages,
+      errorMessages: errorMessages,
+    });
   });
 });
 
