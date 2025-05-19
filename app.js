@@ -78,7 +78,34 @@ app.get("/dashboard", (req, res) => {
   if (!req.session.user) {
     return res.redirect("/");
   }
-  res.render("dashboard", { title: "Dashboard", user: req.session.user });
+  conn.query(
+    "SELECT COUNT(*) AS tickets FROM tickets WHERE user_id = ?",
+    [req.session.user.id],
+    (err, results1) => {
+      const tickets = results1[0].tickets;
+      conn.query(
+        "SELECT COUNT(*) AS openTickets FROM tickets WHERE user_id = ? && status = 1",
+        [req.session.user.id],
+        (err, results2) => {
+          const openTickets = results2[0].openTickets;
+          conn.query(
+            "SELECT COUNT(*) AS closedTickets FROM tickets WHERE user_id = ? && status = 0",
+            [req.session.user.id],
+            (err, results3) => {
+              const closedTickets = results3[0].closedTickets;
+              res.render("dashboard", {
+                title: "Dashboard",
+                user: req.session.user,
+                tickets: tickets,
+                openTickets: openTickets,
+                closedTickets: closedTickets,
+              });
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
 app.post("/register", (req, res) => {
@@ -281,15 +308,39 @@ app.get("/admin-dashboard", (req, res) => {
   if (!req.session.user || req.session.user.role !== "admin") {
     return res.redirect("/");
   }
-  conn.query("SELECT * FROM users", (err, results) => {
+  conn.query("SELECT * FROM users", (err, results1) => {
     conn.query("SELECT * FROM tickets", (err, results2) => {
-      res.render("admin-dashboard", {
-        title: "Admin Dashboard",
-        user: req.session.user,
-        users: results,
-        tickets: results2,
-        result: "",
-      });
+      conn.query(
+        "SELECT COUNT(*) AS tickets FROM tickets",
+        [req.session.user.id],
+        (err, results3) => {
+          const tickets = results3[0].tickets;
+          conn.query(
+            "SELECT COUNT(*) AS openTickets FROM tickets WHERE status = 1",
+            [req.session.user.id],
+            (err, results4) => {
+              const openTickets = results4[0].openTickets;
+              conn.query(
+                "SELECT COUNT(*) AS closedTickets FROM tickets WHERE status = 0",
+                [req.session.user.id],
+                (err, results5) => {
+                  const closedTickets = results5[0].closedTickets;
+                  res.render("admin-dashboard", {
+                    title: "Admin Dashboard",
+                    user: req.session.user,
+                    users: results1,
+                    tickets: results2,
+                    result: "",
+                    allTickets: tickets,
+                    openTickets: openTickets,
+                    closedTickets: closedTickets,
+                  });
+                }
+              );
+            }
+          );
+        }
+      );
     });
   });
 });

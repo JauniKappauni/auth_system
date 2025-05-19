@@ -26,7 +26,7 @@
         <tr>
           <td><%= ticket.category %></td>
           <td><%= ticket.status ? "open" : "closed" %></td>
-          <td><%= ticket.created_at %></td>
+          <td><%= ticket.created_at.toLocaleString() %></td>
           <td>
             <a
               href="/tickets/<%= ticket.id %>"

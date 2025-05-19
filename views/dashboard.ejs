@@ -7,7 +7,29 @@
     <title><%=title%></title>
   </head>
   <body class="bg-gray-900 text-white">
-    <h2 class="text-2xl font-bold text-center mt-4">Hello <%=user.role%> <%=user.email%></h2>
+    <h2 class="text-2xl font-bold text-center mt-4">
+      Hello <%=user.role%> <%=user.email%>
+    </h2>
+    <div class="flex flex-wrap justify-center gap-6 mt-4">
+      <div
+        class="bg-gray-800 p-6 rounded-lg shadow-md text-center"
+      >
+        <h3 class="text-lg font-semibold text-gray-300">Tickets</h3>
+        <p class="text-4xl font-bold text-white mt-2"><%= tickets %></p>
+      </div>
+      <div
+        class="bg-gray-800 p-6 rounded-lg shadow-md text-center"
+      >
+        <h3 class="text-lg font-semibold text-gray-300">Open Tickets</h3>
+        <p class="text-4xl font-bold text-white mt-2"><%= openTickets %></p>
+      </div>
+      <div
+        class="bg-gray-800 p-6 rounded-lg shadow-md text-center"
+      >
+        <h3 class="text-lg font-semibold text-gray-300">Closed Tickets</h3>
+        <p class="text-4xl font-bold text-white mt-2"><%= closedTickets %></p>
+      </div>
+    </div>
   </body>
 </html>
 <%- include('../partials/footer.ejs') %>
