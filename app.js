@@ -83,18 +83,19 @@ app.get("/dashboard", (req, res) => {
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
+  const username = req.body.username;
   const password = req.body.password;
   const role = "user";
   conn.query(
-    "INSERT INTO users (email, password, role) VALUES (?,?,?)",
-    [email, password, role],
+    "INSERT INTO users (email, username, password, role) VALUES (?,?,?,?)",
+    [email, username, password, role],
     (err, results) => {
       if (err) {
         console.error(err);
         return res.send("There was a problem with your registration");
       } else {
         console.log(`✅ Registration by ${role} ${email} with ${password}`);
-        req.session.user = { id: results.insertId, email, role };
+        req.session.user = { id: results.insertId, email, username, role };
         return res.redirect("/dashboard");
       }
     }
@@ -102,33 +103,43 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const email = req.body.email;
+  const identifier = req.body.identifier;
   const password = req.body.password;
-  conn.query("SELECT * FROM users WHERE email = ?", [email], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.send("No email found in the database");
+  conn.query(
+    "SELECT * FROM users WHERE email = ? OR username = ?",
+    [identifier, identifier],
+    (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.send("No email/username found in the database");
+      }
+      if (results.length == 0) {
+        req.flash("error", "Email/Username not found");
+        return res.redirect("/login");
+      } else if (results[0].password == password) {
+        conn.query(
+          "UPDATE users SET last_login = NOW() WHERE email = ? OR username = ?",
+          [identifier, identifier]
+        );
+        console.log(
+          `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
+        );
+        req.session.user = {
+          id: results[0].id,
+          email: results[0].email,
+          username: results[0].username,
+          role: results[0].role,
+        };
+        return res.redirect("/dashboard");
+      } else {
+        console.log(
+          `❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`
+        );
+        req.flash("error", "Wrong password");
+        return res.redirect("/login");
+      }
     }
-    if (results.length == 0) {
-      req.flash("error", "Email not found");
-      return res.redirect("/login");
-    } else if (results[0].password == password) {
-      conn.query("UPDATE users SET last_login = NOW() WHERE email = ?", [
-        email,
-      ]);
-      console.log(
-        `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
-      );
-      req.session.user = { id: results[0].id, email, role: results[0].role };
-      return res.redirect("/dashboard");
-    } else {
-      console.log(
-        `❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`
-      );
-      req.flash("error", "Wrong password");
-      return res.redirect("/login");
-    }
-  });
+  );
 });
 
 app.post("/logout", (req, res) => {
