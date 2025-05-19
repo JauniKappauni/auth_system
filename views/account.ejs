@@ -8,10 +8,9 @@
   </head>
   <body class="bg-gray-900 text-white">
     <hr>
-    <h2 class="text-2xl font-bold text-center mt-4">Current username: <%=user.username%></h2>
     <form action="/change-username" method="POST" class="flex flex-col items-center space-y-4 mt-4">
       <label for="newUsername" class="block text-sm font-medium">New Username</label>
-      <input type="text" name="newUsername" placeholder="Enter new username" class="p-2 bg-gray-700 text-white border border-gray-600 rounded" required />
+      <input type="text" name="newUsername" placeholder="Enter new username" value="<%=user.username%>" class="p-2 bg-gray-700 text-white border border-gray-600 rounded" required />
       <button type="submit" class="bg-blue-500 py-2 px-4 text-white rounded hover:bg-blue-600">Change Username</button>
     </form>
     <hr>
