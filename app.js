@@ -20,7 +20,10 @@ const mailhost = process.env.MAIL_HOST;
 const mailuser = process.env.MAIL_USER;
 const mailpassword = process.env.MAIL_PASSWORD;
 
-const conn = mysql.createConnection({
+let conn;
+
+function connectToDatabase() {
+  conn = mysql.createConnection({
   host: dbhost,
   port: dbport,
   user: dbuser,
@@ -30,10 +33,13 @@ const conn = mysql.createConnection({
 conn.connect((err, res) => {
   if (err) {
     console.error("❌DB CONN", err);
+    connectToDatabase();
   } else {
     console.log("✅DB CONN", res);
   }
 });
+}
+connectToDatabase();
 
 app.set("view engine", "ejs");
 
