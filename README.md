@@ -54,6 +54,17 @@ CREATE TABLE ticket_messages (
     created_at DATETIME,
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
+
+CREATE TABLE audit_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  action VARCHAR(50) NOT NULL,
+  details JSON NULL,
+  ip_address VARCHAR(45) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 );
 ```
 If you use Pterodactyl, you have to make sure to create the root user for external networking with all privileges

@@ -131,6 +131,13 @@ app.post("/register", (req, res) => {
         console.error(err);
         return res.send("There was a problem with your registration");
       } else {
+        const userId = results.insertId;
+        logAuditEvent(
+          userId,
+          "user_register",
+          { username: username, email: email, password: password },
+          req.ip
+        );
         const transporter = nodemailer.createTransport({
           host: `${mailhost}`,
           port: 465,
@@ -154,7 +161,7 @@ app.post("/register", (req, res) => {
           console.log("Message sent: %s", info.messageId);
         }
         emailfunction().catch(console.error);
-        console.log(`✅ Registration by ${role} ${email} with ${password}`);
+
         req.flash(
           "success",
           "Registration sucessful. Please check your inbox to verify your account"
@@ -177,6 +184,12 @@ app.get("/verify-mail", (req, res) => {
       "UPDATE users SET verification_token = NULL, verified = TRUE WHERE verification_token = ?",
       [verification_token],
       (err, result) => {
+        logAuditEvent(
+          null,
+          "email_verified",
+          { token: verification_token },
+          req.ip
+        );
         req.flash("success", "Email verified. You are now able to login.");
         res.redirect("/login");
       }
@@ -196,6 +209,12 @@ app.get("/verify-new-mail", (req, res) => {
       "UPDATE users SET email = new_email, new_email = NULL, email_change_token = NULL WHERE email_change_token = ?",
       [email_change_token],
       (err, result) => {
+        logAuditEvent(
+          null,
+          "email_change_confirmed",
+          { token: email_change_token },
+          req.ip
+        );
         req.flash("success", "Email changed");
         res.redirect("/account");
       }
@@ -226,8 +245,11 @@ app.post("/login", (req, res) => {
           "UPDATE users SET last_login = NOW() WHERE email = ? OR username = ?",
           [identifier, identifier]
         );
-        console.log(
-          `✅ Login by ${results[0].role} ${results[0].email} with ${results[0].password}`
+        logAuditEvent(
+          results[0].id,
+          "login_sucess",
+          { userAgent: req.headers["user-agent"] },
+          req.ip
         );
         req.session.user = {
           id: results[0].id,
@@ -237,8 +259,11 @@ app.post("/login", (req, res) => {
         };
         return res.redirect("/dashboard");
       } else {
-        console.log(
-          `❌ Login by ${results[0].role} ${results[0].email} with ${password} instead of ${results[0].password}`
+        logAuditEvent(
+          results[0].id,
+          "login_failure",
+          { identifier: identifier, password: password },
+          req.ip
         );
         req.flash("error", "Wrong password");
         return res.redirect("/login");
@@ -248,6 +273,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
+  logAuditEvent(req.session.user.id, "logout", {}, req.ip);
   req.session.destroy(() => {
     return res.redirect("/");
   });
@@ -285,10 +311,20 @@ app.post("/forgot-password", (req, res) => {
           "UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?",
           [reset_token, reset_expires, emailvalue],
           (err2) => {
-            if (err) {
+            if (err2) {
               console.error(err2);
               return res.send("No email found in the database");
             } else {
+              logAuditEvent(
+                results[0].id,
+                "password_reset_requested",
+                {
+                  email: emailvalue,
+                  reset_token: reset_token,
+                  reset_expires: reset_expires,
+                },
+                req.ip
+              );
               const transporter = nodemailer.createTransport({
                 host: `${mailhost}`,
                 port: 465,
@@ -371,6 +407,12 @@ app.post("/reset-password", (req, res) => {
                 console.error(err2);
                 return res.send("Error updating password");
               } else {
+                logAuditEvent(
+                  results[0].id,
+                  "password_reset_confirmed",
+                  { newPassword: newPassword },
+                  req.ip
+                );
                 req.flash("success", "Password successfully changed");
                 return res.redirect("/");
               }
@@ -388,21 +430,17 @@ app.get("/admin-dashboard", (req, res) => {
   }
   conn.query("SELECT * FROM users", (err, results1) => {
     conn.query("SELECT * FROM tickets", (err, results2) => {
-      conn.query(
-        "SELECT COUNT(*) AS tickets FROM tickets",
-        [req.session.user.id],
-        (err, results3) => {
-          const tickets = results3[0].tickets;
-          conn.query(
-            "SELECT COUNT(*) AS openTickets FROM tickets WHERE status = 1",
-            [req.session.user.id],
-            (err, results4) => {
-              const openTickets = results4[0].openTickets;
-              conn.query(
-                "SELECT COUNT(*) AS closedTickets FROM tickets WHERE status = 0",
-                [req.session.user.id],
-                (err, results5) => {
-                  const closedTickets = results5[0].closedTickets;
+      conn.query("SELECT COUNT(*) AS tickets FROM tickets", (err, results3) => {
+        const tickets = results3[0].tickets;
+        conn.query(
+          "SELECT COUNT(*) AS openTickets FROM tickets WHERE status = 1",
+          (err, results4) => {
+            const openTickets = results4[0].openTickets;
+            conn.query(
+              "SELECT COUNT(*) AS closedTickets FROM tickets WHERE status = 0",
+              (err, results5) => {
+                const closedTickets = results5[0].closedTickets;
+                conn.query("SELECT * FROM audit_logs", (err, results6) => {
                   res.render("admin-dashboard", {
                     title: "Admin Dashboard",
                     user: req.session.user,
@@ -412,45 +450,99 @@ app.get("/admin-dashboard", (req, res) => {
                     allTickets: tickets,
                     openTickets: openTickets,
                     closedTickets: closedTickets,
+                    audit_logs: results6,
                   });
-                }
-              );
-            }
-          );
-        }
-      );
+                });
+              }
+            );
+          }
+        );
+      });
     });
   });
 });
 
 app.post("/delete-user", (req, res) => {
   const userId = req.body.id;
-  conn.query("DELETE FROM users WHERE id = ?", [userId], (err, result) => {
-    conn.query("SELECT * FROM users", (err, users) => {
-      return res.redirect("/admin-dashboard");
-    });
-  });
+  const adminId = req.session.user.id;
+  conn.query(
+    "SELECT username, email FROM users WHERE id = ?",
+    [userId],
+    (err, results) => {
+      const deletedUser = results[0];
+      conn.query(
+        "UPDATE audit_logs SET user_id = NULL WHERE user_id = ?",
+        [userId],
+        (err) => {
+          conn.query(
+            "DELETE FROM users WHERE id = ?",
+            [userId],
+            (err, result) => {
+              logAuditEvent(
+                adminId,
+                "account_deletion_by_admin",
+                {
+                  deletedUser: deletedUser.username,
+                  deletedEmail: deletedUser.email,
+                  adminUsername: req.session.user.username,
+                  adminEmail: req.session.user.email,
+                },
+                req.ip
+              );
+              return res.redirect("/admin-dashboard");
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
 app.post("/delete-account", (req, res) => {
   const userId = req.session.user.id;
-  conn.query("DELETE FROM users WHERE id = ?", [userId], (err, result) => {
-    req.session.destroy(() => {
-      return res.redirect("/");
-    });
-  });
+  const username = req.session.user.username;
+  const email = req.session.user.email;
+  logAuditEvent(
+    userId,
+    "account_deletion_by_user",
+    { username: username, email: email },
+    req.ip
+  );
+  conn.query(
+    "UPDATE audit_logs SET user_id = NULL WHERE user_id = ?",
+    [userId],
+    (err) => {
+      conn.query("DELETE FROM users WHERE id = ?", [userId], (err, result) => {
+        req.session.destroy(() => {
+          return res.redirect("/");
+        });
+      });
+    }
+  );
 });
 
 app.post("/change-password", (req, res) => {
   const userId = req.session.user.id;
   const newpassword = req.body.newpassword;
   conn.query(
-    "UPDATE users SET password = ? WHERE id = ?",
-    [newpassword, userId],
-    (err, results) => {
-      console.log(`Password from ${userId} was changed to ${newpassword}`);
-      req.flash("success", "Password changed");
-      return res.redirect("/account");
+    "SELECT password FROM users WHERE id = ?",
+    [userId],
+    (err, results1) => {
+      const oldPassword = results1[0].password;
+      conn.query(
+        "UPDATE users SET password = ? WHERE id = ?",
+        [newpassword, userId],
+        (err, results2) => {
+          logAuditEvent(
+            req.session.user.id,
+            "Change_Password",
+            { changes: { password: { from: oldPassword, to: newpassword } } },
+            req.ip
+          );
+          req.flash("success", "Password changed");
+          return res.redirect("/account");
+        }
+      );
     }
   );
 });
@@ -459,12 +551,25 @@ app.post("/change-username", (req, res) => {
   const userId = req.session.user.id;
   const newUsername = req.body.newUsername;
   conn.query(
-    "UPDATE users SET username = ? WHERE id = ?",
-    [newUsername, userId],
+    "SELECT username FROM users WHERE id = ?",
+    [userId],
     (err, results) => {
-      console.log(`Username from ${userId} was changed to ${newUsername}`);
-      req.flash("success", "Username changed");
-      return res.redirect("/account");
+      const oldUsername = results[0].username;
+      conn.query(
+        "UPDATE users SET username = ? WHERE id = ?",
+        [newUsername, userId],
+        (err, results) => {
+          logAuditEvent(
+            req.session.user.id,
+            "Change_username",
+            { changes: { username: { from: oldUsername, to: newUsername } } },
+            req.ip
+          );
+          req.session.user.username = newUsername;
+          req.flash("success", "Username changed");
+          return res.redirect("/account");
+        }
+      );
     }
   );
 });
@@ -477,6 +582,12 @@ app.post("/change-email", (req, res) => {
     "UPDATE users SET new_email = ?, email_change_token = ? WHERE id = ?",
     [newEmail, email_token, userId],
     (err, results) => {
+      logAuditEvent(
+        userId,
+        "change_email_request",
+        { oldEmail: req.session.user.email, newEmail: newEmail },
+        req.ip
+      );
       const transporter = nodemailer.createTransport({
         host: `${mailhost}`,
         port: 465,
@@ -501,7 +612,7 @@ app.post("/change-email", (req, res) => {
       }
       emailfunction();
       req.flash("success", "Email was sent to Inbox of new Email Address");
-        return res.redirect("/account");
+      return res.redirect("/account");
     }
   );
 });
@@ -607,6 +718,18 @@ app.post("/tickets", (req, res) => {
           "INSERT INTO ticket_messages (ticket_id, user_id, message, created_at) VALUES (?,?,?,?)",
           [ticketId, userId, message, created_at],
           (err, result) => {
+            logAuditEvent(
+              userId,
+              "ticket_created",
+              {
+                ticket: {
+                  id: ticketId,
+                  category: category,
+                  firstMessage: message,
+                },
+              },
+              req.ip
+            );
             res.redirect(`/tickets/${ticketId}`);
           }
         );
@@ -632,6 +755,20 @@ app.post("/tickets/:id/messages", (req, res) => {
     }
   );
 });
+
+function logAuditEvent(userId, action, details, ip) {
+  conn.query(
+    "INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES (?,?,?,?)",
+    [userId, action, JSON.stringify(details), ip],
+    (err) => {
+      if (err) {
+        console.log("Fehler:", err);
+      } else {
+        console.log("Output: Erfolgreich");
+      }
+    }
+  );
+}
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
