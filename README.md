@@ -30,7 +30,9 @@ CREATE TABLE users (
 	reset_expires DATETIME,
 	role VARCHAR(50) DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME
+    last_login DATETIME,
+    verified BOOLEAN DEFAULT FALSE,
+    verification_token VARCHAR(255)
 );
 
 CREATE TABLE tickets (

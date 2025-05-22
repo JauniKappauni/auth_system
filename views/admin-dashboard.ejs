@@ -22,21 +22,15 @@
       Hello <%= user.role %> <%= user.email %>
     </h2>
     <div class="flex flex-wrap justify-center gap-6 mt-4">
-      <div
-        class="bg-gray-800 p-6 rounded-lg shadow-md text-center"
-      >
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md text-center">
         <h3 class="text-lg font-semibold text-gray-300">Tickets</h3>
         <p class="text-4xl font-bold text-white mt-2"><%= allTickets %></p>
       </div>
-      <div
-        class="bg-gray-800 p-6 rounded-lg shadow-md text-center"
-      >
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md text-center">
         <h3 class="text-lg font-semibold text-gray-300">Open Tickets</h3>
         <p class="text-4xl font-bold text-white mt-2"><%= openTickets %></p>
       </div>
-      <div
-        class="bg-gray-800 p-6 rounded-lg shadow-md text-center"
-      >
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md text-center">
         <h3 class="text-lg font-semibold text-gray-300">Closed Tickets</h3>
         <p class="text-4xl font-bold text-white mt-2"><%= closedTickets %></p>
       </div>
@@ -54,6 +48,8 @@
           <th>Role</th>
           <th>Created at</th>
           <th>Last Login</th>
+          <th>Verified</th>
+          <th>Verification Token</th>
         </tr>
       </thead>
       <tbody>
@@ -67,7 +63,9 @@
           <td><%= user.reset_expires %></td>
           <td><%= user.role %></td>
           <td><%= user.created_at.toLocaleString() %></td>
-          <td><%= user.last_login.toLocaleString() %></td>
+          <td><%= user.last_login %></td>
+          <td><%= user.verified %></td>
+          <td><%= user.verification_token %></td>
         </tr>
         <% }) %>
       </tbody>

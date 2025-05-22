@@ -119,20 +119,66 @@ app.post("/register", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
   const role = "user";
+  const verification_token = crypto.randomBytes(32).toString("hex");
   conn.query(
-    "INSERT INTO users (email, username, password, role) VALUES (?,?,?,?)",
-    [email, username, password, role],
+    "INSERT INTO users (email, username, password, role, verification_token, verified) VALUES (?,?,?,?,?,FALSE)",
+    [email, username, password, role, verification_token],
     (err, results) => {
       if (err) {
         console.error(err);
         return res.send("There was a problem with your registration");
       } else {
+        const transporter = nodemailer.createTransport({
+          host: `${mailhost}`,
+          port: 465,
+          secure: true,
+          auth: {
+            user: `${mailuser}`,
+            pass: `${mailpassword}`,
+          },
+        });
+        async function emailfunction() {
+          const info = await transporter.sendMail({
+            from: `"Jauni.de - Mail System" <${mailuser}>`,
+            to: `${email}`,
+            subject: "Account Activation",
+            text: `Activate html to see relevant content`,
+            html: `
+                  <p>Here's the link to activate your account:</p>
+                  <p><a href="http://localhost:3000/verify-mail?token=${verification_token}">Activate Account</a></p>
+                  `,
+          });
+          console.log("Message sent: %s", info.messageId);
+        }
+        emailfunction().catch(console.error);
         console.log(`✅ Registration by ${role} ${email} with ${password}`);
-        req.session.user = { id: results.insertId, email, username, role };
-        return res.redirect("/dashboard");
+        req.flash(
+          "success",
+          "Registration sucessful. Please check your inbox to verify your account"
+        );
+        return res.redirect("/login");
       }
     }
   );
+});
+
+app.get("/verify-mail", (req, res) => {
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
+  const verification_token = req.query.token;
+  if (!verification_token) {
+    req.flash("error", "token is missing");
+    return res.redirect("/login");
+  } else {
+    conn.query(
+      "UPDATE users SET verification_token = NULL, verified = TRUE WHERE verification_token = ?",
+      [verification_token],
+      (err, result) => {
+        req.flash("success", "Email verified. You are now able to login.");
+        res.redirect("/login");
+      }
+    );
+  }
 });
 
 app.post("/login", (req, res) => {
@@ -150,6 +196,10 @@ app.post("/login", (req, res) => {
         req.flash("error", "Email/Username not found");
         return res.redirect("/login");
       } else if (results[0].password == password) {
+        if (!results[0].verified) {
+          req.flash("error", "Please verify your email before logging in.");
+          return res.redirect("/login");
+        }
         conn.query(
           "UPDATE users SET last_login = NOW() WHERE email = ? OR username = ?",
           [identifier, identifier]
@@ -355,13 +405,7 @@ app.post("/delete-user", (req, res) => {
   const userId = req.body.id;
   conn.query("DELETE FROM users WHERE id = ?", [userId], (err, result) => {
     conn.query("SELECT * FROM users", (err, users) => {
-      const result = "User deleted successfully";
-      res.render("admin-dashboard", {
-        title: "Admin Dashboard",
-        user: req.session.user,
-        users: users,
-        result: result,
-      });
+      return res.redirect("/admin-dashboard");
     });
   });
 });
