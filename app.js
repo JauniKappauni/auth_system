@@ -566,7 +566,11 @@ app.get("/tickets/:id", (req, res) => {
         return res.redirect("/");
       }
       conn.query(
-        "SELECT * FROM ticket_messages WHERE ticket_id = ? ORDER BY created_at DESC",
+        `SELECT ticket_messages.*, users.username
+        FROM ticket_messages
+        JOIN users ON user_id = users.id
+        WHERE ticket_id = ?
+        ORDER BY created_at DESC`,
         [ticketId],
         (err, results2) => {
           res.render("ticket-details", {
