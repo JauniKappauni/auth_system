@@ -8,7 +8,7 @@
   </head>
   <body class="bg-gray-900 text-white">
     <div class="bg-gray-800 p-6 rounded-lg shadow-md max-w-2xl mx-auto mt-10">
-        <h1 class="text-xl font-medium">Ticket Information</h1>
+      <h1 class="text-xl font-medium">Ticket Information</h1>
       <p>Ticket ID: <%= ticket.id %></p>
       <p>Status: <%=ticket.status ? "Open" : "Closed" %></p>
       <p>Created at: <%= ticket.created_at.toLocaleString() %></p>
@@ -31,17 +31,18 @@
       <h2 class="text-2xl font-semibold text-center">Messages</h2>
       <% messages.forEach(message => { %>
       <div class="bg-gray-800 p-6 rounded-lg shadow-md">
-        <p class="font-bold text-blue-400">
-          <strong>Username: <%= message.username %></strong>
-        </p>
+        <div class="flex justify-between items-center">
+          <p class="font-bold text-blue-400">
+            <strong><%= message.username %> - <%= message.role.charAt(0).toUpperCase() + message.role.slice(1).toLowerCase() %></strong>
+          </p>
+          <p class="text-sm text-gray-400">
+            <small><%= message.created_at.toLocaleString()%></small>
+          </p>
+        </div>
         <p><%= message.message %></p>
-        <p class="text-sm text-gray-400">
-          <small><%= message.created_at.toLocaleString()%></small>
-        </p>
       </div>
       <% }) %>
     </div>
     <%- include('../partials/footer.ejs') %>
   </body>
 </html>
-

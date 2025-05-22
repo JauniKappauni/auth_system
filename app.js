@@ -566,7 +566,7 @@ app.get("/tickets/:id", (req, res) => {
         return res.redirect("/");
       }
       conn.query(
-        `SELECT ticket_messages.*, users.username
+        `SELECT ticket_messages.*, users.username, users.role
         FROM ticket_messages
         JOIN users ON user_id = users.id
         WHERE ticket_id = ?
