@@ -24,20 +24,20 @@ let conn;
 
 function connectToDatabase() {
   conn = mysql.createConnection({
-  host: dbhost,
-  port: dbport,
-  user: dbuser,
-  password: dbpassword,
-  database: dbname,
-});
-conn.connect((err, res) => {
-  if (err) {
-    console.error("❌DB CONN", err);
-    connectToDatabase();
-  } else {
-    console.log("✅DB CONN", res);
-  }
-});
+    host: dbhost,
+    port: dbport,
+    user: dbuser,
+    password: dbpassword,
+    database: dbname,
+  });
+  conn.connect((err, res) => {
+    if (err) {
+      console.error("❌DB CONN", err);
+      connectToDatabase();
+    } else {
+      console.log("✅DB CONN", res);
+    }
+  });
 }
 connectToDatabase();
 
@@ -176,6 +176,25 @@ app.get("/verify-mail", (req, res) => {
       (err, result) => {
         req.flash("success", "Email verified. You are now able to login.");
         res.redirect("/login");
+      }
+    );
+  }
+});
+
+app.get("/verify-new-mail", (req, res) => {
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
+  const email_change_token = req.query.token;
+  if (!email_change_token) {
+    req.flash("error", "token is missing");
+    return res.redirect("/login");
+  } else {
+    conn.query(
+      "UPDATE users SET email = new_email, new_email = NULL, email_change_token = NULL WHERE email_change_token = ?",
+      [email_change_token],
+      (err, result) => {
+        req.flash("success", "Email changed");
+        res.redirect("/account");
       }
     );
   }
@@ -443,6 +462,43 @@ app.post("/change-username", (req, res) => {
       console.log(`Username from ${userId} was changed to ${newUsername}`);
       req.flash("success", "Username changed");
       return res.redirect("/account");
+    }
+  );
+});
+
+app.post("/change-email", (req, res) => {
+  const userId = req.session.user.id;
+  const newEmail = req.body.newEmail;
+  const email_token = crypto.randomBytes(32).toString("hex");
+  conn.query(
+    "UPDATE users SET new_email = ?, email_change_token = ? WHERE id = ?",
+    [newEmail, email_token, userId],
+    (err, results) => {
+      const transporter = nodemailer.createTransport({
+        host: `${mailhost}`,
+        port: 465,
+        secure: true,
+        auth: {
+          user: `${mailuser}`,
+          pass: `${mailpassword}`,
+        },
+      });
+      async function emailfunction() {
+        const info = await transporter.sendMail({
+          from: `"Jauni.de - Mail System" <${mailuser}>`,
+          to: `${newEmail}`,
+          subject: "Email Address Change",
+          text: `Activate html to see relevant content`,
+          html: `
+                  <p>Here's the link to confirm the change of email address:</p>
+                  <p><a href="http://localhost:3000/verify-new-mail?token=${email_token}">Change Email Address</a></p>
+                  `,
+        });
+        console.log("Message sent: %s", info.messageId);
+      }
+      emailfunction();
+      req.flash("success", "Email was sent to Inbox of new Email Address");
+        return res.redirect("/account");
     }
   );
 });

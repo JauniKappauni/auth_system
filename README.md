@@ -32,7 +32,9 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME,
     verified BOOLEAN DEFAULT FALSE,
-    verification_token VARCHAR(255)
+    verification_token VARCHAR(255),
+    new_email VARCHAR(255),
+    email_change_token VARCHAR(64)
 );
 
 CREATE TABLE tickets (

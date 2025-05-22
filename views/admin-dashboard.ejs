@@ -50,6 +50,8 @@
           <th>Last Login</th>
           <th>Verified</th>
           <th>Verification Token</th>
+          <th>New Email</th>
+          <th>Email Change Token</th>
         </tr>
       </thead>
       <tbody>
@@ -66,6 +68,8 @@
           <td><%= user.last_login %></td>
           <td><%= user.verified %></td>
           <td><%= user.verification_token %></td>
+          <td><%= user.new_email %></td>
+          <td><%= user.email_change_token %></td>
         </tr>
         <% }) %>
       </tbody>
