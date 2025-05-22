@@ -23,19 +23,22 @@ const mailpassword = process.env.MAIL_PASSWORD;
 let conn;
 
 function connectToDatabase() {
-  conn = mysql.createConnection({
+  conn = mysql.createPool({
     host: dbhost,
     port: dbport,
     user: dbuser,
     password: dbpassword,
     database: dbname,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
   });
-  conn.connect((err, res) => {
+  conn.getConnection((err, res) => {
     if (err) {
       console.error("❌DB CONN", err);
-      connectToDatabase();
     } else {
       console.log("✅DB CONN", res);
+      res.release();
     }
   });
 }
