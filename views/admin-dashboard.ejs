@@ -52,6 +52,8 @@
           <th>Verification Token</th>
           <th>New Email</th>
           <th>Email Change Token</th>
+          <th>Twofa Secret</th>
+          <th>Twofa Enabled</th>
         </tr>
       </thead>
       <tbody>
@@ -70,6 +72,8 @@
           <td><%= user.verification_token %></td>
           <td><%= user.new_email %></td>
           <td><%= user.email_change_token %></td>
+          <td><%= user.twofa_secret %></td>
+          <td><%= user.twofa_enabled %></td>
         </tr>
         <% }) %>
       </tbody>

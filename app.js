@@ -7,6 +7,8 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const flash = require("express-flash");
 const { userInfo } = require("os");
+const speakeasy = require("speakeasy");
+const qrcode = require("qrcode");
 const app = express();
 const port = 3000;
 
@@ -87,6 +89,8 @@ app.get("/dashboard", (req, res) => {
   if (!req.session.user) {
     return res.redirect("/");
   }
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
   conn.query(
     "SELECT COUNT(*) AS tickets FROM tickets WHERE user_id = ?",
     [req.session.user.id],
@@ -108,6 +112,8 @@ app.get("/dashboard", (req, res) => {
                 tickets: tickets,
                 openTickets: openTickets,
                 closedTickets: closedTickets,
+                successMessages: successMessages,
+                errorMessages: errorMessages,
               });
             }
           );
@@ -241,6 +247,10 @@ app.post("/login", (req, res) => {
           req.flash("error", "Please verify your email before logging in.");
           return res.redirect("/login");
         }
+        if (results[0].twofa_enabled) {
+          req.session.temp_user = results[0];
+          return res.redirect("/2fa/login");
+        }
         conn.query(
           "UPDATE users SET last_login = NOW() WHERE email = ? OR username = ?",
           [identifier, identifier]
@@ -270,6 +280,56 @@ app.post("/login", (req, res) => {
       }
     }
   );
+});
+
+app.get("/2fa/login", (req, res) => {
+  const successMessages = req.flash("success");
+  const errorMessages = req.flash("error");
+  res.render("2fa-login", {
+    title: "2FA",
+    successMessages: successMessages,
+    errorMessages: errorMessages,
+  });
+});
+
+app.post("/2fa/login", (req, res) => {
+  const user = req.session.temp_user;
+  if (!user) {
+    req.flash("error", "Session expired. Please log in again.");
+    return res.redirect("/login");
+  }
+  const verified = speakeasy.totp.verify({
+    secret: user.twofa_secret,
+    encoding: "base32",
+    token: req.body.code,
+  });
+  if (verified) {
+    conn.query("UPDATE users SET last_login = NOW() WHERE id = ?", [user.id]);
+    logAuditEvent(
+      user.id,
+      "login_2fa_success",
+      { userAgent: req.headers["user-agent"] },
+      req.ip
+    );
+    req.flash("success", "✅2FA Code");
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+    };
+    delete req.session.temp_user;
+    return res.redirect("/dashboard");
+  } else {
+    logAuditEvent(
+      user.id,
+      "login_2fa_failure",
+      { attemptedCode: req.body.code },
+      req.ip
+    );
+    req.flash("error", "❌2FA Code");
+    return res.redirect("/2fa/login");
+  }
 });
 
 app.post("/logout", (req, res) => {
@@ -442,7 +502,7 @@ app.get("/admin-dashboard", (req, res) => {
                 const closedTickets = results5[0].closedTickets;
                 conn.query("SELECT * FROM audit_logs", (err, results6) => {
                   res.render("admin-dashboard", {
-                    title: "Admin Dashboard",
+                    title: "Admin-Dashboard",
                     user: req.session.user,
                     users: results1,
                     tickets: results2,
@@ -756,17 +816,79 @@ app.post("/tickets/:id/messages", (req, res) => {
   );
 });
 
+app.get("/2fa/setup", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  const userId = req.session.user.id;
+  conn.query(
+    "SELECT twofa_enabled FROM users WHERE id = ?",
+    [userId],
+    (err, results) => {
+      const user = results[0];
+      if (user.twofa_enabled) {
+        return res.render("2fa", {
+          title: "2FA",
+          qrcode: null,
+          secret: null,
+          message: "2FA is already activated",
+        });
+      } else {
+        var secret = speakeasy.generateSecret({ name: "Auth_System" });
+        qrcode.toDataURL(secret.otpauth_url, function (err, data_url) {
+          req.session.temp_secret = secret.base32;
+          return res.render("2fa", {
+            title: "2FA Setup",
+            user: req.session.user,
+            qrcode: data_url,
+            message: null,
+          });
+        });
+      }
+    }
+  );
+});
+
+app.get("/2fa/verify", (req, res) => {
+  return res.redirect("/");
+});
+
+app.post("/2fa/verify", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  const code = req.body.code;
+  const verified = speakeasy.totp.verify({
+    secret: req.session.temp_secret,
+    encoding: "base32",
+    token: code,
+    window: 1,
+  });
+  if (!verified) {
+    return res.render("2fa", {
+      user: req.session.user,
+      title: "2FA Setup",
+      qrcode: null,
+      secret: null,
+      message: "Invalid code. Please try again.",
+    });
+  }
+  const userId = req.session.user.id;
+  conn.query(
+    "UPDATE users SET twofa_enabled = 1, twofa_secret = ? WHERE id = ?",
+    [req.session.temp_secret, userId],
+    (err) => {
+      delete req.session.temp_secret;
+      req.flash("success", "2FA was successfully enabled");
+      return res.redirect("/dashboard");
+    }
+  );
+});
+
 function logAuditEvent(userId, action, details, ip) {
   conn.query(
     "INSERT INTO audit_logs (user_id, action, details, ip_address) VALUES (?,?,?,?)",
-    [userId, action, JSON.stringify(details), ip],
-    (err) => {
-      if (err) {
-        console.log("Fehler:", err);
-      } else {
-        console.log("Output: Erfolgreich");
-      }
-    }
+    [userId, action, JSON.stringify(details), ip]
   );
 }
 

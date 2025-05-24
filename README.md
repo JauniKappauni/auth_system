@@ -34,7 +34,9 @@ CREATE TABLE users (
     verified BOOLEAN DEFAULT FALSE,
     verification_token VARCHAR(255),
     new_email VARCHAR(255),
-    email_change_token VARCHAR(64)
+    email_change_token VARCHAR(64),
+    twofa_secret VARCHAR(255) DEFAULT NULL,
+    twofa_enabled BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE tickets (
@@ -54,6 +56,7 @@ CREATE TABLE ticket_messages (
     created_at DATETIME,
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
 
 CREATE TABLE audit_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -63,8 +66,6 @@ CREATE TABLE audit_logs (
   ip_address VARCHAR(45) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
 );
 ```
 If you use Pterodactyl, you have to make sure to create the root user for external networking with all privileges
