@@ -12,6 +12,15 @@
       <p>Ticket ID: <%= ticket.id %></p>
       <p>Status: <%=ticket.status ? "Open" : "Closed" %></p>
       <p>Created at: <%= ticket.created_at.toLocaleString() %></p>
+      <% if (ticket.status) { %>
+      <form method="post" action="/tickets/<%= ticket.id %>/close">
+        <input
+          type="submit"
+          class="bg-red-600 hover:bg-red-700 mt-2 px-4 py-2 rounded"
+          value="Close Ticket"
+        />
+      </form>
+      <% } %>
     </div>
     <div class="max-w-2xl mx-auto mt-2 space-y-2">
       <h3 class="text-xl font-medium">Add a message</h3>
@@ -33,7 +42,11 @@
       <div class="bg-gray-800 p-6 rounded-lg shadow-md">
         <div class="flex justify-between items-center">
           <p class="font-bold text-blue-400">
-            <strong><%= message.username %> - <%= message.role.charAt(0).toUpperCase() + message.role.slice(1).toLowerCase() %></strong>
+            <strong
+              ><%= message.username %> - <%=
+              message.role.charAt(0).toUpperCase() +
+              message.role.slice(1).toLowerCase() %></strong
+            >
           </p>
           <p class="text-sm text-gray-400">
             <small><%= message.created_at.toLocaleString()%></small>

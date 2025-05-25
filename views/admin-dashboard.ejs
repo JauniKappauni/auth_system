@@ -5,15 +5,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
-    <style>
-      td {
-        border: 1px solid white;
-      }
-
-      th {
-        border: 2px solid white;
-      }
-    </style>
   </head>
 
   <body class="bg-gray-900 text-white">
@@ -36,50 +27,50 @@
       </div>
     </div>
     <h1 class="text-2xl font-bold text-center mt-4">User List</h1>
-    <table class="mx-auto mt-4">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Email</th>
-          <th>Username</th>
-          <th>Password</th>
-          <th>Reset Token</th>
-          <th>Reset Expires</th>
-          <th>Role</th>
-          <th>Created at</th>
-          <th>Last Login</th>
-          <th>Verified</th>
-          <th>Verification Token</th>
-          <th>New Email</th>
-          <th>Email Change Token</th>
-          <th>Twofa Secret</th>
-          <th>Twofa Enabled</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% users.forEach(user=> { %>
-        <tr>
-          <td><%= user.id %></td>
-          <td><%= user.email %></td>
-          <td><%= user.username %></td>
-          <td><%= user.password %></td>
-          <td><%= user.reset_token %></td>
-          <td><%= user.reset_expires %></td>
-          <td><%= user.role %></td>
-          <td><%= user.created_at.toLocaleString() %></td>
-          <td><%= user.last_login %></td>
-          <td><%= user.verified %></td>
-          <td><%= user.verification_token %></td>
-          <td><%= user.new_email %></td>
-          <td><%= user.email_change_token %></td>
-          <td><%= user.twofa_secret %></td>
-          <td><%= user.twofa_enabled %></td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
-    <br />
-    <hr />
+    <div class="bg-gray-800 p-8 rounded-lg shadow-md m-4">
+      <table class="mx-auto mt-4">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Username</th>
+            <th>Password</th>
+            <th>Reset Token</th>
+            <th>Reset Expires</th>
+            <th>Role</th>
+            <th>Created at</th>
+            <th>Last Login</th>
+            <th>Verified</th>
+            <th>Verification Token</th>
+            <th>New Email</th>
+            <th>Email Change Token</th>
+            <th>Twofa Secret</th>
+            <th>Twofa Enabled</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(user=> { %>
+          <tr>
+            <td><%= user.id %></td>
+            <td><%= user.email %></td>
+            <td><%= user.username %></td>
+            <td><%= user.password %></td>
+            <td><%= user.reset_token %></td>
+            <td><%= user.reset_expires %></td>
+            <td><%= user.role %></td>
+            <td><%= user.created_at.toLocaleString() %></td>
+            <td><%= user.last_login %></td>
+            <td><%= user.verified %></td>
+            <td><%= user.verification_token %></td>
+            <td><%= user.new_email %></td>
+            <td><%= user.email_change_token %></td>
+            <td><%= user.twofa_secret %></td>
+            <td><%= user.twofa_enabled %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
     <form
       action="/delete-user"
       method="POST"
@@ -102,60 +93,65 @@
     <br />
     <hr />
     <h1 class="text-2xl font-bold text-center mt-4">Ticket List</h1>
-    <table class="mx-auto mt-4">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>user_id</th>
-          <th>Category</th>
-          <th>Status</th>
-          <th>Created_at</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% tickets.forEach(ticket=> { %>
-        <tr>
-          <td><%= ticket.id %></td>
-          <td><%= ticket.user_id %></td>
-          <td><%= ticket.category %></td>
-          <td><%= ticket.status %></td>
-          <td><%= ticket.created_at.toLocaleString() %></td>
-          <td>
-            <a
-              href="/tickets/<%= ticket.id %>"
-              class="w-full bg-blue-500 py-2 text-white rounded hover:bg-blue-600"
-              >Open Ticket</a
-            >
-          </td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
-
+    <div class="bg-gray-800 p-8 rounded-lg shadow-md m-4">
+      <table class="mx-auto mt-4">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>user_id</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Created_at</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tickets.forEach(ticket=> { %>
+          <tr>
+            <td><%= ticket.id %></td>
+            <td><%= ticket.user_id %></td>
+            <td><%= ticket.category %></td>
+            <td><%= ticket.status %></td>
+            <td><%= ticket.created_at.toLocaleString() %></td>
+            <td>
+              <a
+                href="/tickets/<%= ticket.id %>"
+                class="w-full bg-blue-500 py-2 text-white rounded hover:bg-blue-600"
+                >Open Ticket</a
+              >
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
     <h1 class="text-2xl font-bold text-center mt-4">Audit Logs</h1>
-    <table class="mx-auto mt-4">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>User_id</th>
-          <th>Action</th>
-          <th>Details</th>
-          <th>IP_Address</th>
-          <th>Created_at</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% audit_logs.forEach(log=> { %>
-        <tr>
-          <td><%= log.id %></td>
-          <td><%= log.user_id %></td>
-          <td><%= log.action %></td>
-          <td><%= log.details %></td>
-          <td><%= log.ip_address %></td>
-          <td><%= log.created_at.toLocaleString() %></td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
+    <div class="bg-gray-800 p-8 rounded-lg shadow-md m-4">
+      <table class="mx-auto mt-4">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User_id</th>
+            <th>Action</th>
+            <th>Details</th>
+            <th>IP_Address</th>
+            <th>Created_at</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% audit_logs.forEach(log=> { %>
+          <tr>
+            <td><%= log.id %></td>
+            <td><%= log.user_id %></td>
+            <td><%= log.action %></td>
+            <td><%= log.details %></td>
+            <td><%= log.ip_address %></td>
+            <td><%= log.created_at.toLocaleString() %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
   </body>
 </html>
+<%- include('../partials/footer.ejs') %>

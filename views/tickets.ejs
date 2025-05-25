@@ -6,38 +6,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%=title%></title>
   </head>
-  <body class="bg-gray-900 text-white">
-    <a
-      href="/tickets/new"
-      class="w-full bg-blue-500 py-2 text-white rounded hover:bg-blue-600"
-      >Create Ticket</a
-    >
-    <table class="mx-auto mt-4">
-      <thead>
-        <tr>
-          <th>Category</th>
-          <th>Status</th>
-          <th>Created at</th>
-          <th>Link</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% tickets.forEach(ticket=> { %>
-        <tr>
-          <td><%= ticket.category %></td>
-          <td><%= ticket.status ? "open" : "closed" %></td>
-          <td><%= ticket.created_at.toLocaleString() %></td>
-          <td>
-            <a
-              href="/tickets/<%= ticket.id %>"
-              class="w-full bg-blue-500 py-2 text-white rounded hover:bg-blue-600"
-              >Open Ticket</a
-            >
-          </td>
-        </tr>
-        <% }) %>
-      </tbody>
-    </table>
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <main class="flex-grow">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-md max-w-2xl mx-auto mt-10">
+      <div class="text-center mb-4">
+        <a
+        href="/tickets/new"
+        class="w-full bg-blue-500 py-2 px-2 text-white rounded hover:bg-blue-600"
+        >Create Ticket</a
+      >
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Created at</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tickets.forEach(ticket=> { %>
+          <tr>
+            <td class="p-8"><%= ticket.category %></td>
+            <td class="p-8"><%= ticket.status ? "open" : "closed" %></td>
+            <td class="p-8"><%= ticket.created_at.toLocaleString() %></td>
+            <td class="p-8">
+              <a
+                href="/tickets/<%= ticket.id %>"
+                class="w-full bg-blue-500 py-2 text-white rounded hover:bg-blue-600"
+                >Open Ticket</a
+              >
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
   </body>
+  </main>
 </html>
 <%- include('../partials/footer.ejs') %>

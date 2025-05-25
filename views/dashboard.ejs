@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%=title%></title>
   </head>
-  <body class="bg-gray-900 text-white">
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <main class="flex-grow">
     <h2 class="text-2xl font-bold text-center mt-4">
       Hello <%=user.role%> <%=user.email%>
     </h2>
@@ -42,5 +43,6 @@
       </div>
       <% } %>
   </body>
+  </main>
 </html>
 <%- include('../partials/footer.ejs') %>

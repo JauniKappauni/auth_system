@@ -811,7 +811,10 @@ app.post("/tickets/:id/messages", (req, res) => {
     "INSERT INTO ticket_messages (ticket_id, user_id, message, created_at) VALUES (?,?,?,?)",
     [ticketId, userId, message, created_at],
     (err, result) => {
-      res.redirect(`/tickets/${ticketId}`);
+      conn.query("UPDATE tickets SET status = true WHERE id = ? AND status = false", [ticketId], (err2) => {
+        res.redirect(`/tickets/${ticketId}`);
+      })
+      
     }
   );
 });
@@ -884,6 +887,12 @@ app.post("/2fa/verify", (req, res) => {
     }
   );
 });
+
+app.post("/tickets/:id/close", (req, res) => {
+  const ticketId = req.params.id;
+  conn.query("UPDATE tickets SET status = false WHERE id = ?", [ticketId]);
+  res.redirect("/tickets")
+})
 
 function logAuditEvent(userId, action, details, ip) {
   conn.query(
