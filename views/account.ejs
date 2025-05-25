@@ -78,17 +78,15 @@
       </button>
     </form>
     <hr />
-    <form class="flex flex-col items-center space-y-4 mt-4">
-      <label class="block text-sm font-medium"
-        >2FA Status: <%= user.twofa_enabled %></label
-      >
-      <a
-        href="/2fa/setup"
-        class="bg-blue-500 py-2 px-4 text-white rounded hover:bg-blue-600"
-        >2FA Setup</a
-      >
+    <form method="post" action="/2fa/deactivate" class="flex flex-col items-center space-y-4 mt-4">
+    <label class="block text-sm font-medium">2FA Status: <%= user.twofa_enabled ? "Enabled" : "Disabled" %></label>
+    <% if (user.twofa_enabled) { %>
+      <input type="submit" class="bg-red-500 py-2 px-4 text-white rounded hover:bg-red-600" value="Deactivate 2FA">
+    <% } else { %>
+    <a href="/2fa/setup" class="bg-blue-500 py-2 px-4 text-white rounded hover:bg-blue-600">2FA Setup</a>
+    <% } %>
     </form>
-    <hr />
+    <hr>
     <form
       action="/delete-account"
       method="POST"

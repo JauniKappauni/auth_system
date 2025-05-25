@@ -164,7 +164,22 @@ app.post("/register", (req, res) => {
                   <p><a href="http://localhost:3000/verify-mail?token=${verification_token}">Activate Account</a></p>
                   `,
           });
-          console.log("Message sent: %s", info.messageId);
+          logAuditEvent(
+            userId,
+            "user_register_email",
+            {
+              username: username,
+              email: email,
+              password: password,
+              a: info.accepted,
+              b: info.envelope,
+              c: info.messageId,
+              d: info.pending,
+              e: info.rejected,
+              f: info.response,
+            },
+            req.ip
+          );
         }
         emailfunction().catch(console.error);
 
@@ -811,10 +826,13 @@ app.post("/tickets/:id/messages", (req, res) => {
     "INSERT INTO ticket_messages (ticket_id, user_id, message, created_at) VALUES (?,?,?,?)",
     [ticketId, userId, message, created_at],
     (err, result) => {
-      conn.query("UPDATE tickets SET status = true WHERE id = ? AND status = false", [ticketId], (err2) => {
-        res.redirect(`/tickets/${ticketId}`);
-      })
-      
+      conn.query(
+        "UPDATE tickets SET status = true WHERE id = ? AND status = false",
+        [ticketId],
+        (err2) => {
+          res.redirect(`/tickets/${ticketId}`);
+        }
+      );
     }
   );
 });
@@ -882,6 +900,16 @@ app.post("/2fa/verify", (req, res) => {
     [req.session.temp_secret, userId],
     (err) => {
       delete req.session.temp_secret;
+      logAuditEvent(
+        userId,
+        "user_2fa_activated",
+        {
+          username: req.session.user.username,
+          email: req.session.user.email,
+          password: req.session.user.password,
+        },
+        req.ip
+      );
       req.flash("success", "2FA was successfully enabled");
       return res.redirect("/dashboard");
     }
@@ -891,8 +919,8 @@ app.post("/2fa/verify", (req, res) => {
 app.post("/tickets/:id/close", (req, res) => {
   const ticketId = req.params.id;
   conn.query("UPDATE tickets SET status = false WHERE id = ?", [ticketId]);
-  res.redirect("/tickets")
-})
+  res.redirect("/tickets");
+});
 
 function logAuditEvent(userId, action, details, ip) {
   conn.query(
@@ -900,6 +928,42 @@ function logAuditEvent(userId, action, details, ip) {
     [userId, action, JSON.stringify(details), ip]
   );
 }
+
+app.post("/2fa/deactivate", (req, res) => {
+  userId = req.session.user.id;
+  conn.query(
+    "UPDATE users SET twofa_enabled = 0, twofa_secret = NULL WHERE id = ?",
+    [userId],
+    (err, results) => {
+      logAuditEvent(
+        userId,
+        "user_2fa_deactivated",
+        {
+          username: req.session.user.username,
+          email: req.session.user.email,
+          password: req.session.user.password,
+        },
+        req.ip
+      );
+      req.session.user.twofa_enabled = 0;
+      req.session.user.twofa_secret = null;
+      return res.redirect("/account");
+    }
+  );
+});
+
+app.get("/activity", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/");
+  }
+  conn.query("SELECT * FROM audit_logs WHERE user_id = ?", [req.session.user.id], (err, results) => {
+    res.render("activity", {
+      title: "Activity",
+      audit_logs: results,
+      user: req.session.user
+    });
+  });
+});
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
