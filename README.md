@@ -12,6 +12,7 @@ SESSION_SECRET=
 MAIL_HOST=
 MAIL_USER=
 MAIL_PASSWORD=
+MAIL_ORIGIN_ADDRESS=
 ```
 
 Create a `mysql or mariadb` database

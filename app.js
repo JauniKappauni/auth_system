@@ -21,6 +21,7 @@ const dbname = process.env.DB_NAME;
 const mailhost = process.env.MAIL_HOST;
 const mailuser = process.env.MAIL_USER;
 const mailpassword = process.env.MAIL_PASSWORD;
+const mailoriginaddress = process.env.MAIL_ORIGIN_ADDRESS;
 
 let conn;
 
@@ -155,7 +156,7 @@ app.post("/register", (req, res) => {
         });
         async function emailfunction() {
           const info = await transporter.sendMail({
-            from: `"Jauni.de - Mail System" <${mailuser}>`,
+            from: `"Jauni.de - Mail System" <${mailoriginaddress}>`,
             to: `${email}`,
             subject: "Account Activation",
             text: `Activate html to see relevant content`,
@@ -412,7 +413,7 @@ app.post("/forgot-password", (req, res) => {
 
               async function email() {
                 const info = await transporter.sendMail({
-                  from: `"Jauni.de - Mail System" <${mailuser}>`,
+                  from: `"Jauni.de - Mail System" <${mailoriginaddress}>`,
                   to: `${emailvalue}`,
                   subject: "Password Reset",
                   text: `Activate html to see relevant content`,
@@ -674,7 +675,7 @@ app.post("/change-email", (req, res) => {
       });
       async function emailfunction() {
         const info = await transporter.sendMail({
-          from: `"Jauni.de - Mail System" <${mailuser}>`,
+          from: `"Jauni.de - Mail System" <${mailoriginaddress}>`,
           to: `${newEmail}`,
           subject: "Email Address Change",
           text: `Activate html to see relevant content`,
